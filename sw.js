@@ -1,4 +1,4 @@
-const CACHE_NAME = 'artha-lakshya-v1';
+const CACHE_NAME = 'artha-lakshya-v2';
 const ASSETS = [
   './',
   './index.html',
