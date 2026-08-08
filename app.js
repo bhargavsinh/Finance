@@ -1,8 +1,15 @@
-const TARGET_CORPUS = 20000000; // 2.0 Crore (નવો ટાર્ગેટ)
-const ANNUAL_REAL_RATE = 0.055; // 5.5% (રિયલ રિટર્ન)
-const MONTHLY_RATE = ANNUAL_REAL_RATE / 12;
+// 1. ટાર્ગેટ અને વળતરના સેટિંગ્સ
+const TARGET_CORPUS = 20000000; // ₹2.0 કરોડ
+const INFLATION_RATE = 0.065; // 6.5% મોંઘવારી
 
-// 2. LocalStorage Backup: Page Refresh પર Data ના જાય તે માટે
+// Nifty 50 Direct Plan (કોઈ કમિશન નહિ): 12% - 6.5% = 5.5% વાસ્તવિક વળતર
+const DIRECT_REAL_RATE = 0.055; 
+const MONTHLY_RATE_DIRECT = DIRECT_REAL_RATE / 12;
+
+// Regular Plan (બેંક/એજન્ટ મારફતે 1.5% કમિશન કાપીને): 10.5% - 6.5% = 4.0% વાસ્તવિક વળતર
+const REGULAR_REAL_RATE = 0.040;
+const MONTHLY_RATE_REGULAR = REGULAR_REAL_RATE / 12;
+
 let ledger = JSON.parse(localStorage.getItem('artha_lakshya_ledger')) || [];
 
 // DOM Elements
@@ -13,12 +20,10 @@ const rollingAvgEl = document.getElementById('rolling-avg');
 const totalInvestedEl = document.getElementById('total-invested');
 const emptyStateEl = document.getElementById('empty-state');
 
-// ડેટા બ્રાઉઝરમાં કાયમી સેવ કરવા માટે
 function saveData() {
     localStorage.setItem('artha_lakshya_ledger', JSON.stringify(ledger));
 }
 
-// રકમને ભારતીય ચલણ (₹) ફોર્મેટમાં બતાવવા માટે
 function formatCurrency(amount) {
     return new Intl.NumberFormat('en-IN', {
         style: 'currency',
@@ -27,15 +32,20 @@ function formatCurrency(amount) {
     }).format(amount);
 }
 
+// ગણતરી માટેનું ફંક્શન (TVM Formula)
+function calculateMonthsRemaining(fv, pv, pmt, monthlyRate) {
+    const numerator = Math.log((fv * monthlyRate + pmt) / (pv * monthlyRate + pmt));
+    const denominator = Math.log(1 + monthlyRate);
+    if (numerator <= 0 || isNaN(numerator) || pv >= fv) return 0;
+    return Math.ceil(numerator / denominator);
+}
+
 function updateDashboard() {
-    // ડેટાને તારીખ મુજબ ગોઠવો
     ledger.sort((a, b) => new Date(a.month) - new Date(b.month));
 
-    // અત્યાર સુધીનું કુલ રોકાણ (Total Invested)
     const totalInvested = ledger.reduce((sum, entry) => sum + parseFloat(entry.invested), 0);
     totalInvestedEl.textContent = formatCurrency(totalInvested);
 
-    // 3. Target Date Logic: છેલ્લા 6 મહિનાની સરેરાશ (Rolling Avg) કાઢવી
     const lastMonths = ledger.slice(-6);
     const pmt = lastMonths.length > 0 
         ? lastMonths.reduce((sum, entry) => sum + parseFloat(entry.invested), 0) / lastMonths.length 
@@ -43,35 +53,51 @@ function updateDashboard() {
         
     rollingAvgEl.textContent = formatCurrency(pmt);
 
+    // ડાયનેમિક મેસેજ બતાવવા માટે નવું Element બનાવવું (જો ન હોય તો)
+    let insightMsgEl = document.getElementById('insight-msg');
+    if (!insightMsgEl) {
+        insightMsgEl = document.createElement('div');
+        insightMsgEl.id = 'insight-msg';
+        insightMsgEl.className = 'text-amber-400 text-sm mt-6 font-semibold bg-amber-500/10 p-3 rounded-xl border border-amber-500/20 leading-relaxed';
+        targetDateEl.parentElement.appendChild(insightMsgEl);
+    }
+
     if (pmt <= 0) {
         targetDateEl.textContent = "--";
+        insightMsgEl.style.display = 'none';
         return;
+    } else {
+        insightMsgEl.style.display = 'block';
     }
 
-    const pv = totalInvested; // અત્યાર સુધી જમા થયેલ રકમ
-    const fv = TARGET_CORPUS; // લક્ષ્યાંક (2 કરોડ)
+    const pv = totalInvested; 
+    const fv = TARGET_CORPUS;
 
-    // બાકીના મહિના ગણવાનું અલ્ગોરિધમ (TVM સાથે, જેથી 5.5% વળતરની પણ ગણતરી થાય)
-    const r = MONTHLY_RATE;
-    const numerator = Math.log((fv * r + pmt) / (pv * r + pmt));
-    const denominator = Math.log(1 + r);
+    // Direct vs Regular ની સરખામણી
+    const monthsDirect = calculateMonthsRemaining(fv, pv, pmt, MONTHLY_RATE_DIRECT);
+    const monthsRegular = calculateMonthsRemaining(fv, pv, pmt, MONTHLY_RATE_REGULAR);
 
-    // જો લક્ષ્ય પૂર્ણ થઈ ગયું હોય
-    if (numerator <= 0 || isNaN(numerator) || pv >= fv) {
+    if (monthsDirect === 0) {
         targetDateEl.textContent = "GOAL REACHED!";
         targetDateEl.classList.add('text-green-400');
+        insightMsgEl.style.display = 'none';
         return;
     }
 
-    const nMonths = Math.ceil(numerator / denominator);
-    
-    // આજની તારીખમાં તે બાકીના મહિના (nMonths) ઉમેરીને નવી તારીખ કાઢવી
+    // Direct Plan ની તારીખ સેટ કરવી
     const targetDate = new Date();
-    targetDate.setMonth(targetDate.getMonth() + nMonths);
-    const options = { month: 'short', year: 'numeric' };
-    
-    targetDateEl.textContent = targetDate.toLocaleDateString('en-IN', options).toUpperCase();
+    targetDate.setMonth(targetDate.getMonth() + monthsDirect);
+    targetDateEl.textContent = targetDate.toLocaleDateString('en-IN', { month: 'short', year: 'numeric' }).toUpperCase();
     targetDateEl.classList.remove('text-green-400');
+
+    // કમિશન બચાવવાથી કેટલા વર્ષનો ફાયદો થયો તે બતાવવું
+    if (monthsRegular > monthsDirect) {
+        const monthsSaved = monthsRegular - monthsDirect;
+        const yearsSaved = (monthsSaved / 12).toFixed(1);
+        insightMsgEl.innerHTML = `🚀 <b>Nifty 50 (Direct Plan)</b> ની તાકાત: <br> બેંકના કમિશન (Regular Plan) થી બચીને આપ <b>${yearsSaved} વર્ષ વહેલા</b> આર્થિક સ્વતંત્રતા મેળવી શકશો!`;
+    } else {
+        insightMsgEl.style.display = 'none';
+    }
 }
 
 function renderLedger() {
@@ -82,19 +108,18 @@ function renderLedger() {
     } else {
         emptyStateEl.classList.add('hidden');
         
-        // સૌથી નવો ડેટા ઉપર બતાવવા માટે ઉતરતા ક્રમમાં ગોઠવણ
         const sortedDisplay = [...ledger].sort((a, b) => new Date(b.month) - new Date(a.month));
         
         sortedDisplay.forEach((entry) => {
             const row = document.createElement('tr');
-            row.className = 'hover:bg-slate-800/30 transition-colors';
+            row.className = 'hover:bg-slate-800/40 transition-colors';
             row.innerHTML = `
-                <td class="px-6 py-4 font-medium">${new Date(entry.month).toLocaleDateString('en-IN', { month: 'short', year: 'numeric' })}</td>
-                <td class="px-6 py-4 text-slate-300">${formatCurrency(entry.income)}</td>
-                <td class="px-6 py-4 text-amber-400 font-semibold">${formatCurrency(entry.invested)}</td>
-                <td class="px-6 py-4 text-right">
-                    <button onclick="deleteEntry('${entry.id}')" class="text-slate-500 hover:text-red-400 transition-colors">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <td class="px-8 py-5 font-medium text-white">${new Date(entry.month).toLocaleDateString('en-IN', { month: 'short', year: 'numeric' })}</td>
+                <td class="px-8 py-5 text-slate-300 font-numbers">${formatCurrency(entry.income)}</td>
+                <td class="px-8 py-5 text-amber-400 font-semibold font-numbers">${formatCurrency(entry.invested)}</td>
+                <td class="px-8 py-5 text-right">
+                    <button onclick="deleteEntry('${entry.id}')" class="p-2 text-slate-500 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-all">
+                        <svg class="w-5 h-5 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                         </svg>
                     </button>
@@ -106,7 +131,7 @@ function renderLedger() {
 }
 
 window.deleteEntry = function(id) {
-    if (confirm('શું આપ ખરેખર આ રેકોર્ડ ડિલીટ કરવા માંગો છો?')) {
+    if (confirm('શું આપ આ રેકોર્ડ ડિલીટ કરવા માંગો છો?')) {
         ledger = ledger.filter(entry => entry.id !== id);
         saveData();
         renderLedger();
@@ -120,10 +145,9 @@ entryForm.addEventListener('submit', (e) => {
     const income = parseFloat(document.getElementById('input-income').value);
     const invested = parseFloat(document.getElementById('input-invested').value);
 
-    // 1. Data Validation: Invested રકમ Income કરતાં વધુ ન હોવી જોઈએ
     if (invested > income) {
         alert("ભૂલ: રોકાણની રકમ (Invested) તમારી કુલ આવક (Income) કરતાં વધુ ન હોઈ શકે!");
-        return; // કોડ અહી જ અટકી જશે, ડેટા સેવ નહીં થાય
+        return; 
     }
     
     const newEntry = {
@@ -140,6 +164,6 @@ entryForm.addEventListener('submit', (e) => {
     entryForm.reset();
 });
 
-// Initial Load (પેજ રિફ્રેશ થાય ત્યારે ડેટા પાછો લાવવા)
+// Initial Load
 renderLedger();
 updateDashboard();
