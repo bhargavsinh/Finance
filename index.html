@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Artha-Lakshya | Premium FIRE Tracker</title>
+    <meta name="description" content="Ultra-Modern Dynamic FIRE Goal Tracker PWA">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#030712">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Premium Fonts: Plus Jakarta Sans & Space Grotesk for numbers -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            background-color: #030712; /* Deepest dark */
+            color: #f8fafc; 
+            overflow-x: hidden;
+        }
+        
+        .font-numbers { font-family: 'Space Grotesk', sans-serif; }
+
+        /* Background Ambient Glow */
+        .ambient-bg {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            z-index: -1;
+            background: 
+                radial-gradient(circle at 15% 50%, rgba(245, 158, 11, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 85% 30%, rgba(217, 119, 6, 0.06) 0%, transparent 50%);
+            filter: blur(60px);
+        }
+
+        /* Advanced Glassmorphism */
+        .glass-panel {
+            background: rgba(17, 24, 39, 0.4);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            transition: all 0.3s ease;
+        }
+
+        .glass-panel:hover {
+            border-color: rgba(245, 158, 11, 0.2);
+            box-shadow: 0 25px 50px -12px rgba(245, 158, 11, 0.1);
+            transform: translateY(-2px);
+        }
+
+        /* Modern Gradients */
+        .text-gradient {
+            background: linear-gradient(135deg, #fde68a 0%, #f59e0b 50%, #d97706 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .bg-gradient-btn {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            transition: all 0.3s ease;
+        }
+        
+        .bg-gradient-btn:hover {
+            box-shadow: 0 10px 25px -5px rgba(245, 158, 11, 0.4);
+            filter: brightness(1.1);
+        }
+
+        /* Input Styling */
+        .modern-input {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+        .modern-input:focus {
+            border-color: #f59e0b;
+            box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.15);
+            background: rgba(15, 23, 42, 0.9);
+        }
+
+        /* Custom Scrollbar for Ledger */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #475569; }
+    </style>
+</head>
+<body class="min-h-screen pb-20 selection:bg-amber-500/30 selection:text-amber-200">
+
+    <div class="ambient-bg"></div>
+
+    <!-- Header -->
+    <header class="pt-10 pb-6 px-6 text-center z-10 relative">
+        <div class="inline-flex items-center justify-center space-x-2 mb-2">
+            <div class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></div>
+            <p class="text-amber-500/80 uppercase tracking-[0.2em] text-xs font-bold">Dynamic Forecasting</p>
+            <div class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></div>
+        </div>
+        <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight text-white">
+            Artha-<span class="text-gradient">Lakshya</span>
+        </h1>
+    </header>
+
+    <main class="max-w-5xl mx-auto px-4 sm:px-6 mt-4 space-y-8 relative z-10">
+        
+        <!-- Dashboard Hero (Redesigned) -->
+        <section id="dashboard" class="grid grid-cols-1 md:grid-cols-12 gap-6">
+            
+            <!-- Main Target Card -->
+            <div class="md:col-span-12 lg:col-span-8 glass-panel p-8 md:p-10 rounded-3xl relative overflow-hidden group">
+                <div class="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity duration-500">
+                    <svg width="120" height="120" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                </div>
+                
+                <h2 class="text-slate-400 uppercase tracking-widest text-sm font-semibold mb-3 flex items-center">
+                    <svg class="w-4 h-4 mr-2 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                    Projected Target Date
+                </h2>
+                
+                <div id="target-date" class="font-numbers text-5xl md:text-7xl font-bold text-gradient mt-2 tracking-tight">
+                    --
+                </div>
+                
+                <div class="mt-8 flex items-center justify-between border-t border-slate-800 pt-6">
+                    <div>
+                        <p class="text-slate-500 text-xs uppercase tracking-wider font-semibold">Goal Status</p>
+                        <p class="text-slate-300 text-sm mt-1">Based on trailing 6-month data</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-slate-500 text-xs uppercase tracking-wider font-semibold">Target Corpus</p>
+                        <p id="target-corpus-display" class="font-numbers text-xl font-bold text-white mt-1">₹2.0 Cr</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stats Side Cards -->
+            <div class="md:col-span-12 lg:col-span-4 flex flex-col gap-6">
+                <div class="glass-panel p-7 rounded-3xl flex-1 flex flex-col justify-center">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-slate-400 text-xs font-bold uppercase tracking-wider">Rolling Avg (PMT)</h3>
+                        <div class="p-2 bg-blue-500/10 rounded-lg text-blue-400">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                        </div>
+                    </div>
+                    <p id="rolling-avg" class="font-numbers text-3xl font-bold text-white">₹0</p>
+                </div>
+
+                <div class="glass-panel p-7 rounded-3xl flex-1 flex flex-col justify-center">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-slate-400 text-xs font-bold uppercase tracking-wider">Total Invested</h3>
+                        <div class="p-2 bg-emerald-500/10 rounded-lg text-emerald-400">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        </div>
+                    </div>
+                    <p id="total-invested" class="font-numbers text-3xl font-bold text-white">₹0</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Data Input Form (Redesigned) -->
+        <section class="glass-panel p-8 rounded-3xl mt-10">
+            <h2 class="text-2xl font-bold mb-8 text-white flex items-center">
+                <div class="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center mr-3 border border-slate-700">
+                    <svg class="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                </div>
+                New Monthly Record
+            </h2>
+            
+            <form id="entry-form" class="grid grid-cols-1 md:grid-cols-12 gap-6 items-end">
+                <div class="md:col-span-3">
+                    <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 ml-1">Month & Year</label>
+                    <input type="month" id="input-date" required class="modern-input w-full text-white rounded-xl p-3.5 outline-none font-numbers text-lg">
+                </div>
+                <div class="md:col-span-3">
+                    <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 ml-1">Total Income</label>
+                    <div class="relative">
+                        <span class="absolute left-4 top-3.5 text-slate-500 font-numbers text-lg">₹</span>
+                        <input type="number" id="input-income" placeholder="100000" required class="modern-input w-full text-white rounded-xl p-3.5 pl-9 outline-none font-numbers text-lg">
+                    </div>
+                </div>
+                <div class="md:col-span-3">
+                    <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 ml-1">Amount Invested</label>
+                    <div class="relative">
+                        <span class="absolute left-4 top-3.5 text-amber-500/50 font-numbers text-lg">₹</span>
+                        <input type="number" id="input-invested" placeholder="40000" required class="modern-input w-full text-amber-400 rounded-xl p-3.5 pl-9 outline-none font-numbers text-lg">
+                    </div>
+                </div>
+                <div class="md:col-span-3">
+                    <button type="submit" class="w-full bg-gradient-btn text-slate-900 font-bold text-lg py-3.5 rounded-xl flex justify-center items-center">
+                        Save Record
+                        <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                    </button>
+                </div>
+            </form>
+        </section>
+
+        <!-- Ledger Table (Redesigned) -->
+        <section class="glass-panel rounded-3xl overflow-hidden mt-10">
+            <div class="p-8 border-b border-slate-800/60 bg-slate-900/40 flex justify-between items-center">
+                <h2 class="text-xl font-bold text-white">Investment Ledger</h2>
+                <span class="px-3 py-1 bg-slate-800 rounded-full text-xs text-slate-400 border border-slate-700">History</span>
+            </div>
+            
+            <div class="overflow-x-auto p-2">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="text-slate-400 text-xs uppercase tracking-wider border-b border-slate-800/50">
+                            <th class="px-8 py-5 font-semibold">Month</th>
+                            <th class="px-8 py-5 font-semibold">Income</th>
+                            <th class="px-8 py-5 font-semibold">Invested</th>
+                            <th class="px-8 py-5 font-semibold text-right">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ledger-body" class="divide-y divide-slate-800/30">
+                        <!-- Rows will be injected here -->
+                    </tbody>
+                </table>
+                
+                <!-- Empty State -->
+                <div id="empty-state" class="p-16 text-center hidden">
+                    <div class="w-20 h-20 mx-auto bg-slate-800/50 rounded-full flex items-center justify-center mb-4 border border-slate-700/50">
+                        <svg class="w-10 h-10 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                    </div>
+                    <h3 class="text-lg font-medium text-slate-300">No data found</h3>
+                    <p class="text-slate-500 text-sm mt-1">Start your journey by adding your first month's record above.</p>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <script src="app.js"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js').catch(err => console.log('SW registration failed:', err));
+            });
+        }
+    </script>
+</body>
+</html>
